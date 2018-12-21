@@ -34,8 +34,7 @@ void swap_abc(int a, int b) {
 int partition_abc(int l, int h) {
     int pivot = abc_count[h];
     int i = l - 1;
-    int j;
-    for (j = l; j <= h - 1; j++) {
+    for (int j = l; j <= h - 1; j++) {
         if (abc_count[j] >= pivot) {
             i++;
             swap_abc(i, j);
@@ -105,17 +104,15 @@ int *count_codes(struct record **rec_arr, int n) {
     double H = 0;
     for (int i = 0; i < N; i++) {
         abc_prob[i] = (double) abc_count[i] / ALL;
-        H += (abc_prob[i] * log2(abc_prob[i]));
+        H -= (abc_prob[i] * log2(abc_prob[i]));
         L[i] = ((int) ceil(-log2(abc_prob[i])));
-        avg_L += L[i];
+        avg_L += L[i] * abc_prob[i];
         if (i > 0) {
             Q[i] = Q[i - 1] + abc_prob[i - 1];
         }
         printf("|%2d. | %c | %.4f | %.4f | %2d | %15s|\n", i, abc[i], abc_prob[i], Q[i], L[i], to_binary(Q[i], L[i]));
         printf("--------------------------------------------------\n");
     }
-    avg_L /= N;
-    H = -H;
     printf("Average L = %.4f\nEntropy = %.4f\n", avg_L, H);
 }
 

@@ -10,8 +10,7 @@ void swap_records(struct record **a, struct record **b) {
 int partition(struct record **rec_arr, int l, int h) {
     struct record *pivot = rec_arr[h];
     int i = l - 1;
-    int j;
-    for (j = l; j <= h - 1; j++) {
+    for (int j = l; j <= h - 1; j++) {
         if (compare_records_by_attorney(rec_arr[j], pivot) <= 0) {
             i++;
             swap_records(&rec_arr[i], &rec_arr[j]);
