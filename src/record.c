@@ -131,10 +131,14 @@ void print_record_array_partially(struct record **rec_array, int n, int part) {
         print_record(i + 1, rec_array[i]);
         print_table_separator();
         if ((i + 1) % part == 0) {
-            printf("Enter - continue\nQ - quit\n");
+            printf("R - Forward\nE - Back\nQ - Quit\n");
             in = 0;
-            while (in != 'Q' && in != 'q' && in != '\n' && in != ' ') in = getch();
+            while (in != 'Q' && in != 'q' && in != 'r' && in != 'R' && in != 'e' && in != 'E') in = getch();
             if (in == 'q' || in == 'Q') return;
+            else if (in == 'e' || in == 'E') {
+                i -= part * 2;
+                if (i < -1) i = -1;
+            }
             system("clear");
             print_table_header();
         }

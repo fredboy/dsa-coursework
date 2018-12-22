@@ -24,18 +24,21 @@ void handle_args(int argc, char **argv) {
 
 int menu() {
     char in;
-    int db_sorted = 0;
 
     FILE *file = fopen(db_file, "rb");
     struct record **rec_arr = read_records_to_array(file, DB_SIZE);
+    fclose(file);
+    file = fopen(db_file, "rb");
+    struct record **s_rec_arr = read_records_to_array(file, DB_SIZE);
+    quick_sort_records(s_rec_arr, 0, DB_SIZE - 1);
+    fclose(file);
     struct queue *found = NULL;
     struct avl_node *avl_root = NULL;
-    fclose(file);
 
     while (1) {
         system("clear");
         printf("1. Print database\n"
-               "2. QuickSort database (by attorney)\n"
+               "2. Print sorted\n"
                "3. Search database\n"
                "4. Create AVL tree (sorted by name)\n"
                "5. Print AVL tree\n"
@@ -48,34 +51,17 @@ int menu() {
                 print_record_array_partially(rec_arr, DB_SIZE, 10);
                 break;
             case '2':
-                quick_sort_records(rec_arr, 0, DB_SIZE - 1);
-                db_sorted = 1;
-                printf("Database is now sorted!\n");
-                getch();
+                print_record_array_partially(s_rec_arr, DB_SIZE, 10);
                 break;
-            case '3':
-                if (!db_sorted) {
-                    printf("Database is not sorted.\n"
-                           "To perform a search, you need to sort it first.\n"
-                           "Do you want to sort it now? [y/n]\n");
-                    in = getch();
-                    if (in == 'y' || in == 'Y') {
-                        quick_sort_records(rec_arr, 0, DB_SIZE - 1);
-                        db_sorted = 1;
-                    }
-                }
-                if (db_sorted) {
+            case '3': {
                     char *search_key = (char *) malloc(44 * sizeof(char *));
                     printf("Enter your search key (at least 3 characters): ");
                     do {
                         fgets(search_key, 44, stdin);
                     } while (strlen(search_key) < 3);
-
-                    found = find_records(rec_arr, DB_SIZE, search_key);
+                    found = find_records(s_rec_arr, DB_SIZE, search_key);
                     print_record_queue_partially(found, 10);
-
                     free(search_key);
-
                 }
                 break;
             case '4':
@@ -105,7 +91,12 @@ int menu() {
                 }
                 break;
             case '7':
-                count_codes(rec_arr, DB_SIZE);
+                file = fopen(db_file, "rb");
+                count_codes(file);
+                fclose(file);
+                file = fopen(db_file, "rb");
+                write_compressed(file);
+                fclose(file);
                 break;
             case '0':
                 return 0;

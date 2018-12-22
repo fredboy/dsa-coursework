@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <math.h>
+#include <memory.h>
 #include "shannon.h"
 
 int N = 0;
@@ -57,7 +58,9 @@ int contains(char ch) {
     return -1;
 }
 
-int *count_codes(struct record **rec_arr, int n) {
+int *count_codes(FILE *file) {
+    char r_ch = 0;
+    int tmp = 0;
     N = 0;
     ALL = 0;
     for (int i = 0; i < ABC; i++) {
@@ -66,53 +69,68 @@ int *count_codes(struct record **rec_arr, int n) {
         Q[i] = 0;
         L[i] = 0;
     }
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < 30; j++) {
-            if (contains(rec_arr[i]->name[j]) == -1) {
-                abc[N] = rec_arr[i]->name[j];
-                abc_count[N]++;
-                N++;
-            } else {
-                abc_count[contains(rec_arr[i]->name[j])]++;
-            }
-            ALL++;
+    while (!feof(file)) {
+        fread(&r_ch, sizeof(char), 1, file);
+        tmp = contains(r_ch);
+        if (tmp == -1) {
+            abc[N] = r_ch;
+            abc_count[N]++;
+            N++;
+        } else {
+            abc_count[tmp]++;
         }
-        for (int j = 0; j < 22; j++) {
-            if (contains(rec_arr[i]->attorney[j]) == -1) {
-                abc[N] = rec_arr[i]->attorney[j];
-                abc_count[N]++;
-                N++;
-            } else {
-                abc_count[contains(rec_arr[i]->date[j])]++;
-            }
-            ALL++;
-        }
-        for (int j = 0; j < 10; j++) {
-            if (contains(rec_arr[i]->date[j]) == -1) {
-                abc[N] = rec_arr[i]->date[j];
-                abc_count[N]++;
-                N++;
-            } else {
-                abc_count[contains(rec_arr[i]->date[j])]++;
-            }
-            ALL++;
-        }
+        ALL++;
     }
     quick_sort_abc(0, N - 1);
-    printf("--------------------------------------------------\n");
+    printf("----------------------------------------------------\n");
     double avg_L = 0;
+    double coef = 0;
     double H = 0;
     for (int i = 0; i < N; i++) {
         abc_prob[i] = (double) abc_count[i] / ALL;
         H -= (abc_prob[i] * log2(abc_prob[i]));
         L[i] = ((int) ceil(-log2(abc_prob[i])));
         avg_L += L[i] * abc_prob[i];
+        coef += (L[i] * abc_count[i]);
         if (i > 0) {
             Q[i] = Q[i - 1] + abc_prob[i - 1];
         }
-        printf("|%2d. | %c | %.4f | %.4f | %2d | %15s|\n", i, abc[i], abc_prob[i], Q[i], L[i], to_binary(Q[i], L[i]));
-        printf("--------------------------------------------------\n");
+        printf("|%4d. | %c | %.4f | %.4f | %2d | %15s|\n", i, abc[i], abc_prob[i], Q[i], L[i], to_binary(Q[i], L[i]));
+        printf("----------------------------------------------------\n");
     }
+    coef = (double) (ALL * 8) / coef;
     printf("Average L = %.4f\nEntropy = %.4f\n", avg_L, H);
+    printf("Compression coefficient: %.2f\n", coef);
+}
+
+char curr_byte = 0;
+char bit_count = 0;
+
+void write_bit(FILE *file, char bit) {
+    bit -= '0';
+    if (bit < 0 || bit > 1) return;
+    curr_byte = curr_byte << 1 | bit;
+    bit_count++;
+    if (bit_count == 8) {
+        fwrite(&curr_byte, sizeof(char), 1, file);
+        curr_byte = 0;
+        bit_count = 0;
+    }
+}
+
+void write_compressed(FILE *source) {
+    char r_ch = 0;
+    char *bin;
+    int t = 0;
+    FILE *dest = fopen("new_base_3.dat", "wb");
+    while (!feof(source)) {
+        fread(&r_ch, sizeof(char), 1, source);
+        t = contains(r_ch);
+        if (t == -1) continue;
+        bin = to_binary(Q[t], L[t]);
+        for (int i = 0; i < L[t]; i++) write_bit(dest, bin[i]);
+    }
+    if (bit_count != 0) for (int i = 0; i < 8 - bit_count; i++) write_bit(dest, '0');
+    fclose(dest);
 }
 

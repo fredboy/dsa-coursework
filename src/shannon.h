@@ -3,10 +3,12 @@
 
 #include "record.h"
 
-#define ABC 64
+#define ABC 256
 
 int L[ABC];
 
-int *count_codes(struct record **rec_arr, int n);
+int *count_codes(FILE *file);
+
+void write_compressed(FILE *source);
 
 #endif //DSA_COURSEWORK_SHANNON_H
