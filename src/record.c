@@ -58,6 +58,7 @@ struct queue *read_records_to_queue(FILE *file) {
         }
     }
     rec_queue->tail = le;
+    return rec_queue;
 }
 
 struct record **read_records_to_array(FILE *file, int n) {
